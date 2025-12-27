@@ -7,31 +7,26 @@ const {
   getMyRequests,
   acceptRequest,
   declineRequest,
-  getRequestById,
-  getActiveSessions,
-  terminateSession
 } = require("../controllers/sessionRequestController");
 
-// 🔹 Send session request
+// =========================
+// SEND SESSION REQUEST
+// =========================
 router.post("/", auth, sendRequest);
 
-// 🔹 Get incoming requests
+// =========================
+// GET INCOMING REQUESTS
+// =========================
 router.get("/incoming", auth, getMyRequests);
 
-// 🔹 Accept request
+// =========================
+// ACCEPT REQUEST
+// =========================
 router.post("/accept", auth, acceptRequest);
 
-// 🔹 Decline request
+// =========================
+// DECLINE REQUEST
+// =========================
 router.post("/decline", auth, declineRequest);
-
-// 🔹 Get active sessions
-router.get("/active", auth, getActiveSessions);
-
-router.get("/:id", auth, getRequestById);
-
-router.post("/terminate" , auth , terminateSession)
-
-
-
 
 module.exports = router;

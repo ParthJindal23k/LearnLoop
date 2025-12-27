@@ -1,0 +1,40 @@
+const mongoose = require("mongoose");
+
+const ratingSchema = new mongoose.Schema(
+  {
+    session: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Session",
+      required: true,
+    },
+    rater: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    ratedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    score: {
+      type: Number,
+      min: 1,
+      max: 5,
+      required: true,
+    },
+    feedback: {
+      type: String,
+      default: "",
+    },
+  },
+  { timestamps: true }
+);
+
+// prevent double rating
+ratingSchema.index(
+  { session: 1, rater: 1 },
+  { unique: true }
+);
+
+module.exports = mongoose.model("Rating", ratingSchema);

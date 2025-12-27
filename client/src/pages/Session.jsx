@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { Send, Video } from "lucide-react";
 
 const Session = () => {
-  const { id } = useParams(); // sessionId
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -19,7 +19,7 @@ const Session = () => {
   const typingTimeout = useRef(null);
 
   // =========================
-  // 🔗 JOIN SESSION ROOM
+  // JOIN SESSION ROOM
   // =========================
   useEffect(() => {
     socket.emit("join-session", id);
@@ -32,7 +32,7 @@ const Session = () => {
   }, [id]);
 
   // =========================
-  // 📦 LOAD OLD MESSAGES
+  // LOAD MESSAGES
   // =========================
   useEffect(() => {
     const fetchMessages = async () => {
@@ -55,7 +55,7 @@ const Session = () => {
   }, [id]);
 
   // =========================
-  // 🔔 SOCKET LISTENERS
+  // SOCKET LISTENERS
   // =========================
   useEffect(() => {
     socket.on("new-message", (msg) => {
@@ -73,14 +73,14 @@ const Session = () => {
   }, []);
 
   // =========================
-  // ⬇ AUTO SCROLL
+  // AUTO SCROLL
   // =========================
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // =========================
-  // ✍️ TYPING HANDLER
+  // TYPING HANDLER
   // =========================
   const handleTyping = (e) => {
     setText(e.target.value);
@@ -100,7 +100,7 @@ const Session = () => {
   };
 
   // =========================
-  // 📩 SEND TEXT MESSAGE
+  // SEND MESSAGE
   // =========================
   const sendMessage = () => {
     if (!text.trim()) return;
@@ -121,7 +121,7 @@ const Session = () => {
   };
 
   // =========================
-  // 🎥 SEND VIDEO INVITE
+  // VIDEO INVITE
   // =========================
   const startVideoCall = () => {
     socket.emit("send-message", {
@@ -140,102 +140,107 @@ const Session = () => {
   return (
     <div className="h-full flex flex-col bg-[#0f172a] text-white">
       {/* ================= HEADER ================= */}
-      <div className="h-16 px-4 flex items-center justify-between border-b border-gray-700 bg-[#020617]">
+      <div className="h-14 px-5 flex items-center justify-between bg-[#020617] border-b border-white/10">
         <div className="flex items-center gap-3">
           <img
             src="https://avatar.iran.liara.run/public"
-            className="w-10 h-10 rounded-full"
+            className="w-9 h-9 rounded-full"
             alt="avatar"
           />
           <div>
-            <p className="font-semibold">Session Partner</p>
+            <p className="text-sm font-semibold">Session Partner</p>
             <p className="text-xs text-green-400">
-              {isTyping ? "Typing..." : "Online"}
+              {isTyping ? "Typing…" : "Online"}
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setShowConfirm(true)}
-          className="flex items-center gap-2 bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md text-sm"
         >
-          <Video size={18} />
+          <Video size={16} />
           Video
         </button>
       </div>
 
-      {/* ================= CHAT BODY ================= */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      {/* ================= CHAT ================= */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-[#0f172a]">
+        {messages.length === 0 && (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            <div className="text-center">
+              <p className="mb-1">👋 No messages yet</p>
+              <p>Start the conversation</p>
+            </div>
+          </div>
+        )}
+
         {messages.map((msg) => {
           const senderId =
-            typeof msg.sender === "string"
-              ? msg.sender
-              : msg.sender?._id;
-
+            msg.sender?._id || msg.sender || msg.senderId;
           const isMe = senderId === user._id;
 
           return (
             <div
-              key={msg._id}
+              key={msg._id || Math.random()}
               className={`flex ${isMe ? "justify-end" : "justify-start"}`}
             >
-              {!isMe && (
-                <img
-                  src={
-                    msg.sender?.avatarUrl ||
-                    "https://avatar.iran.liara.run/public"
-                  }
-                  className="w-8 h-8 rounded-full mr-2 self-end"
-                  alt="avatar"
-                />
-              )}
-
               <div
-                className={`px-4 py-2 rounded-2xl max-w-[65%] text-sm ${
+                className={`max-w-[60%] px-4 py-2 rounded-lg text-sm ${
                   isMe
-                    ? "bg-blue-600 rounded-br-none"
-                    : "bg-gray-700 rounded-bl-none"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-700 text-white"
                 }`}
               >
                 {msg.type === "video-invite" ? (
                   <div
-                    onClick={() => navigate(`/video/${id}/preview`)}
+                    onClick={() =>
+                      navigate(`/video/${id}/preview`)
+                    }
                     className="cursor-pointer"
                   >
-                    <p className="font-semibold text-sm mb-1">
-                      📹 Video Call Invitation
+                    <p className="font-semibold mb-1">
+                      📹 Video Call Invite
                     </p>
-                    <p className="text-xs opacity-80 mb-2">
-                      {msg.content?.senderName} invited you to a video meeting
+                    <p className="text-xs opacity-80">
+                      Click to join the video call
                     </p>
-                    <div className="inline-block bg-black/20 px-3 py-1 rounded text-xs underline">
-                      Join Video Call
-                    </div>
                   </div>
                 ) : (
                   msg.content
                 )}
+
+                <p className="text-[10px] opacity-50 mt-1 text-right">
+                  {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
             </div>
           );
         })}
 
+        {isTyping && (
+          <p className="text-xs text-gray-400">typing…</p>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
       {/* ================= INPUT ================= */}
-      <div className="h-16 px-4 flex items-center gap-3 border-t border-gray-700 bg-[#020617]">
+      <div className="h-14 px-4 flex items-center gap-3 bg-[#020617] border-t border-white/10">
         <input
           value={text}
           onChange={handleTyping}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message"
-          className="flex-1 bg-gray-800 px-4 py-2 rounded-full focus:outline-none"
+          placeholder="Type a message..."
+          className="flex-1 bg-gray-800 px-4 py-2 rounded-md text-sm focus:outline-none"
         />
 
         <button
           onClick={sendMessage}
-          className="bg-blue-600 p-3 rounded-full hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded-md"
         >
           <Send size={18} />
         </button>
@@ -243,13 +248,13 @@ const Session = () => {
 
       {/* ================= CONFIRM MODAL ================= */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#020617] p-6 rounded-lg w-80">
-            <h3 className="text-lg font-semibold mb-3">
-              Start Video Call?
+            <h3 className="text-lg font-semibold mb-2">
+              Start video call?
             </h3>
             <p className="text-sm text-gray-400 mb-5">
-              A video call link will be sent in chat.
+              A video call invite will be sent.
             </p>
 
             <div className="flex justify-end gap-3">

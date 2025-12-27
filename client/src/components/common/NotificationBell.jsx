@@ -10,11 +10,14 @@ const NotificationBell = () => {
   const ref = useRef(null);
   const navigate = useNavigate();
 
+  const token = localStorage.getItem("token");
+
   // ================================
   // 🔔 SOCKET REAL-TIME EVENTS
   // ================================
   useEffect(() => {
-    // 🔹 New session request (receiver side)
+    if (!token) return;
+
     const onSessionRequest = (data) => {
       addNotification({
         type: "session-request",
@@ -25,19 +28,17 @@ const NotificationBell = () => {
       });
     };
 
-    // 🔹 Session accepted / declined (sender side)
     const onStatusUpdate = (data) => {
       addNotification({
         type: "session-status",
         requestId: data.requestId,
-        senderName: data.receiverName, // who acted
+        senderName: data.receiverName,
         senderAvatar: data.receiverAvatar,
         status: data.status,
         createdAt: new Date(),
       });
     };
 
-    // 🔹 Friend request
     const onFriendRequest = (data) => {
       addNotification({
         type: "friend-request",
@@ -57,7 +58,7 @@ const NotificationBell = () => {
       socket.off("request-status-update", onStatusUpdate);
       socket.off("new-friend-request", onFriendRequest);
     };
-  }, []);
+  }, [token]);
 
   // ================================
   // 🧠 SAFE ADD (NO DUPLICATES)
@@ -65,12 +66,9 @@ const NotificationBell = () => {
   const addNotification = (notif) => {
     setNotifications((prev) => {
       const exists = prev.some(
-        (n) =>
-          n.requestId === notif.requestId &&
-          n.type === notif.type
+        (n) => n.type === notif.type && n.requestId === notif.requestId
       );
-      if (exists) return prev;
-      return [notif, ...prev];
+      return exists ? prev : [notif, ...prev];
     });
   };
 
@@ -78,30 +76,29 @@ const NotificationBell = () => {
   // 📦 LOAD PAST NOTIFICATIONS
   // ================================
   useEffect(() => {
-    if (!open) return;
+    if (!open || !token) return;
 
     const loadNotifications = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
 
         const [sessionRes, friendRes] = await Promise.all([
           axios.get(
             `${import.meta.env.VITE_BACKEND_URI}/api/session-request/incoming`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers }
           ),
           axios.get(
             `${import.meta.env.VITE_BACKEND_URI}/api/friends/incoming`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers }
           ),
         ]);
 
         const sessionNotifs = sessionRes.data.map((n) => ({
           type: "session-request",
           requestId: n._id,
-          senderName:
-            n.sender?.name ||
-            n.senderName ||
-            "Unknown User",
+          senderName: n.sender?.name || "Unknown User",
           senderAvatar:
             n.sender?.avatarUrl ||
             "https://avatar.iran.liara.run/public",
@@ -111,18 +108,12 @@ const NotificationBell = () => {
         const friendNotifs = friendRes.data.map((n) => ({
           type: "friend-request",
           requestId: n._id,
-          senderName:
-            n.sender?.name ||
-            n.from?.name ||
-            n.senderName ||
-            "Unknown User",
+          senderName: n.sender?.name || "Unknown User",
           senderAvatar:
             n.sender?.avatarUrl ||
-            n.from?.avatarUrl ||
             "https://avatar.iran.liara.run/public",
           createdAt: n.createdAt,
         }));
-
 
         setNotifications(
           [...sessionNotifs, ...friendNotifs].sort(
@@ -135,7 +126,7 @@ const NotificationBell = () => {
     };
 
     loadNotifications();
-  }, [open]);
+  }, [open, token]);
 
   // ================================
   // ❌ CLOSE ON OUTSIDE CLICK
@@ -155,8 +146,7 @@ const NotificationBell = () => {
   // ================================
   return (
     <div className="relative" ref={ref}>
-      {/* Bell */}
-      <button onClick={() => setOpen(!open)} className="relative">
+      <button onClick={() => setOpen((v) => !v)} className="relative">
         <Bell />
 
         {notifications.length > 0 && (
@@ -166,25 +156,14 @@ const NotificationBell = () => {
         )}
       </button>
 
-      {/* Dropdown */}
       {open && (
-        <div
-          className="absolute right-0 mt-3 w-96 rounded-lg shadow-lg border z-50"
-          style={{
-            backgroundColor: "var(--bg-color)",
-            borderColor: "var(--secondary-color)",
-            maxHeight: "400px",
-            overflowY: "auto",
-          }}
-        >
+        <div className="absolute right-0 mt-3 w-96 rounded-lg shadow-lg border z-50 bg-white max-h-[400px] overflow-y-auto">
           <div className="px-4 py-3 font-semibold border-b">
             Notifications
           </div>
 
           {notifications.length === 0 ? (
-            <p className="p-4 text-sm opacity-70">
-              No notifications
-            </p>
+            <p className="p-4 text-sm opacity-70">No notifications</p>
           ) : (
             notifications.slice(0, 8).map((n) => (
               <div
@@ -193,7 +172,7 @@ const NotificationBell = () => {
                   setOpen(false);
                   navigate("/notification");
                 }}
-                className="flex gap-3 px-4 py-3 hover:bg-black/10 cursor-pointer border-b"
+                className="flex gap-3 px-4 py-3 hover:bg-gray-100 cursor-pointer border-b"
               >
                 <img
                   src={n.senderAvatar}
@@ -203,10 +182,8 @@ const NotificationBell = () => {
 
                 <div className="flex-1">
                   <p className="text-sm">
-                    <strong>{n.senderName}</strong>{" "}
-                    {renderText(n)}
+                    <strong>{n.senderName}</strong> {renderText(n)}
                   </p>
-
                   <p className="text-xs opacity-60 mt-1">
                     {timeAgo(new Date(n.createdAt))}
                   </p>
@@ -224,20 +201,13 @@ const NotificationBell = () => {
 // 📝 TEXT RENDERER
 // ================================
 const renderText = (n) => {
-  if (n.type === "friend-request") {
-    return "sent you a friend request";
-  }
-
-  if (n.type === "session-request") {
-    return "sent you a session request";
-  }
-
+  if (n.type === "friend-request") return "sent you a friend request";
+  if (n.type === "session-request") return "sent you a session request";
   if (n.type === "session-status") {
     return n.status === "accepted"
       ? "accepted your session request"
       : "declined your session request";
   }
-
   return "";
 };
 

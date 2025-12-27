@@ -26,13 +26,13 @@ const FindFriends = () => {
     fetchUsers();
   }, []);
 
-  // 🔹 Send session request
+  // 🔹 Send session request (UNCHANGED)
   const sendSessionRequest = async (receiverId) => {
     try {
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URI}/api/session-request`,
         {
-          receiverId:receiverId,
+          receiverId: receiverId,
           skillRequested: "SkillSwap Session",
         },
         {
@@ -49,72 +49,91 @@ const FindFriends = () => {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Find Friends</h1>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* HEADER */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Find Friends
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Discover people who match your learning goals
+        </p>
+      </div>
 
+      {/* EMPTY STATE */}
       {users.length === 0 ? (
-        <p>No users found</p>
+        <div className="bg-white rounded-2xl border p-16 text-center shadow-sm">
+          <p className="text-gray-500 text-lg">
+            No users found at the moment
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {users.map(({ user, matchType }) => {
             const isSent = sentRequests.includes(user._id);
 
             return (
               <div
                 key={user._id}
-                className="p-4 rounded-lg border"
-                style={{
-                  backgroundColor: "var(--bg-color)",
-                  borderColor:
-                    matchType === "perfect"
-                      ? "var(--primary-color)"
-                      : "var(--secondary-color)",
-                }}
+                className="bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                {/* User info */}
-                <div className="flex items-center gap-3 mb-3">
+                {/* TOP SECTION */}
+                <div className="p-6 flex items-center gap-4">
                   <img
                     src={user.avatarUrl}
                     alt="avatar"
-                    className="w-12 h-12 rounded-full"
+                    className="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500"
                   />
-                  <div>
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm opacity-70 capitalize">
-                      {matchType} match
+
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 text-lg">
+                      {user.name}
                     </p>
+
+                    {/* MATCH BADGE */}
+                    <span
+                      className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium ${
+                        matchType === "perfect"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {matchType} match
+                    </span>
                   </div>
                 </div>
 
-                {/* Skills */}
-                <p className="text-sm mb-1">
-                  <strong>Teaches:</strong>{" "}
-                  {user.teachSkills.length > 0
-                    ? user.teachSkills.join(", ")
-                    : "—"}
-                </p>
+                {/* SKILLS */}
+                <div className="px-6 pb-4 space-y-2 text-sm text-gray-700">
+                  <p>
+                    <strong>Teaches:</strong>{" "}
+                    {user.teachSkills.length > 0
+                      ? user.teachSkills.join(", ")
+                      : "—"}
+                  </p>
 
-                <p className="text-sm mb-4">
-                  <strong>Learns:</strong>{" "}
-                  {user.learnSkills.length > 0
-                    ? user.learnSkills.join(", ")
-                    : "—"}
-                </p>
+                  <p>
+                    <strong>Learns:</strong>{" "}
+                    {user.learnSkills.length > 0
+                      ? user.learnSkills.join(", ")
+                      : "—"}
+                  </p>
+                </div>
 
-                {/* Action */}
-                <button
-                  disabled={isSent}
-                  onClick={() => sendSessionRequest(user._id)}
-                  className="w-full py-1 rounded"
-                  style={{
-                    backgroundColor: isSent
-                      ? "#555"
-                      : "var(--primary-color)",
-                    cursor: isSent ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {isSent ? "Request Sent" : "Send Session Request"}
-                </button>
+                {/* ACTION */}
+                <div className="px-6 pb-6">
+                  <button
+                    disabled={isSent}
+                    onClick={() => sendSessionRequest(user._id)}
+                    className={`w-full py-2.5 rounded-xl font-medium transition-all ${
+                      isSent
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.02]"
+                    }`}
+                  >
+                    {isSent ? "Request Sent" : "Send Session Request"}
+                  </button>
+                </div>
               </div>
             );
           })}

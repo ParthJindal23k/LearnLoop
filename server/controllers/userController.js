@@ -73,13 +73,19 @@ const findFriends = async (req, res) => {
     }).select("-password");
 
     const rankedUsers = users.map((user) => {
-      const teachesWhatILearn = user.teachSkills.some(skill =>
-        currentUser.learnSkills.includes(skill)
+      const userTeach = user.teachSkills || [];
+      const userLearn = user.learnSkills || [];
+      const currentTeach = currentUser.teachSkills || [];
+      const currentLearn = currentUser.learnSkills || [];
+
+      const teachesWhatILearn = userTeach.some(skill =>
+        currentLearn.includes(skill)
       );
 
-      const learnsWhatITeach = user.learnSkills.some(skill =>
-        currentUser.teachSkills.includes(skill)
+      const learnsWhatITeach = userLearn.some(skill =>
+        currentTeach.includes(skill)
       );
+
 
       let matchType = "none";
       let score = 0;
@@ -113,11 +119,6 @@ const findFriends = async (req, res) => {
 };
 
 
-
-
-
 module.exports = {
-  changePassword,updateProfile,findFriends
+  changePassword, updateProfile, findFriends
 };
-
-

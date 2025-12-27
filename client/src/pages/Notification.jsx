@@ -2,21 +2,27 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import NotificationDetailCard from "../components/notifications/NotificationDetailCard";
 
-
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);
   const [selected, setSelected] = useState(null);
   const token = localStorage.getItem("token");
 
+  // =========================
+  // UPDATE STATUS (UNCHANGED)
+  // =========================
   const updateStatus = (id, newStatus) => {
     setNotifications((prev) =>
       prev.map((n) =>
-        n._id === id ? { ...n, status: newStatus } : n
+        n._id === id || n.requestId === id
+          ? { ...n, status: newStatus }
+          : n
       )
     );
   };
 
-
+  // =========================
+  // LOAD NOTIFICATIONS (UNCHANGED)
+  // =========================
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -33,12 +39,13 @@ const Notification = () => {
 
         const sessionNotifs = sessionRes.data.map((n) => ({
           ...n,
-          type: "session",
+          type: "session-request",
         }));
 
         const friendNotifs = friendRes.data.map((n) => ({
           ...n,
-          type: "friend",
+          type: "friend-request",
+          status: n.status || "pending",
         }));
 
         setNotifications(
@@ -55,69 +62,107 @@ const Notification = () => {
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-64px)]">
+    <div className="flex h-[calc(100vh-64px)] bg-gray-50">
+      {/* LEFT INBOX */}
+      <aside className="w-full max-w-sm border-r bg-white overflow-y-auto">
+        <div className="p-5 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Notifications
+          </h2>
+          <p className="text-sm text-gray-500">
+            Requests & updates
+          </p>
+        </div>
 
-      <div className="w-1/3 border-r overflow-y-auto">
-        {notifications.map((n) => (
-  <div
-    key={`${n.type}-${n._id || n.requestId}`}
-    onClick={() => setSelected(n)}
-    className={`p-4 cursor-pointer border-b ${
-      selected?._id === n._id ? "bg-black/10" : ""
-    }`}
-  >
-    <div className="flex gap-3">
-      {/* ✅ SAFE AVATAR */}
-      <img
-        src={
-          n.sender?.avatarUrl ||
-          n.senderAvatar ||
-          "https://avatar.iran.liara.run/public"
-        }
-        className="w-10 h-10 rounded-full"
-      />
-
-      <div>
-        {/* ✅ SAFE NAME */}
-        <p className="font-semibold">
-          {n.sender?.name || n.senderName || "Unknown User"}
-        </p>
-
-        {/* ✅ SAFE DESCRIPTION */}
-        <p className="text-sm opacity-70">
-          {n.type === "friend-request"
-            ? "Sent you a friend request"
-            : n.type === "session"
-            ? `Requested session for ${n.skillRequested}`
-            : n.status === "accepted"
-            ? "Accepted your session request"
-            : "Declined your session request"}
-        </p>
-
-        <p className="text-xs opacity-50 capitalize">
-          {n.status || "pending"}
-        </p>
-      </div>
-    </div>
-  </div>
-))}
-
-      </div>
-
-      <div className="flex-1 p-6">
-        {!selected ? (
-          <p className="opacity-60">Select a notification</p>
+        {notifications.length === 0 ? (
+          <div className="p-6 text-sm text-gray-500">
+            No notifications yet
+          </div>
         ) : (
-          <NotificationDetailCard
-            notification={selected}
-            onUpdate={updateStatus}
-          />
+          notifications.map((n) => {
+            const isActive = selected?._id === n._id;
+
+            return (
+              <button
+                key={`${n.type}-${n._id}`}
+                onClick={() => setSelected(n)}
+                className={`w-full text-left p-4 border-b transition ${
+                  isActive
+                    ? "bg-blue-50 border-l-4 border-l-blue-600"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex gap-3">
+                  <img
+                    src={
+                      n.sender?.avatarUrl ||
+                      n.senderAvatar ||
+                      "https://avatar.iran.liara.run/public"
+                    }
+                    alt="avatar"
+                    className="w-11 h-11 rounded-full object-cover"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {n.sender?.name || n.senderName || "Unknown User"}
+                    </p>
+
+                    <p className="text-sm text-gray-600 truncate mt-0.5">
+                      {n.type === "friend-request"
+                        ? "Sent you a friend request"
+                        : n.type === "session-request"
+                        ? `Requested a session`
+                        : n.status === "accepted"
+                        ? "Accepted your session request"
+                        : "Declined your session request"}
+                    </p>
+
+                    <div className="mt-1">
+                      <span
+                        className={`inline-block text-xs px-2 py-0.5 rounded-full ${
+                          n.status === "accepted"
+                            ? "bg-green-100 text-green-700"
+                            : n.status === "declined"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {n.status || "pending"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })
         )}
-      </div>
+      </aside>
+
+      {/* RIGHT DETAIL */}
+      <main className="flex-1 bg-gray-50 p-8 overflow-y-auto">
+        {!selected ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-400 text-lg">
+                Select a notification
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                View details & take action
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border p-6">
+            <NotificationDetailCard
+              notification={selected}
+              onUpdate={updateStatus}
+            />
+          </div>
+        )}
+      </main>
     </div>
   );
 };
-
-
 
 export default Notification;

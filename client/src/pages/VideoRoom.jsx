@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { socket } from "../socket";
+import { PhoneOff, Mic, Video } from "lucide-react";
 
 const VideoRoom = () => {
   const { id } = useParams(); // sessionId
@@ -41,7 +42,7 @@ const VideoRoom = () => {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    streamRef.current.getTracks().forEach(track => {
+    streamRef.current.getTracks().forEach((track) => {
       peer.addTrack(track, streamRef.current);
     });
 
@@ -91,27 +92,52 @@ const VideoRoom = () => {
   };
 
   return (
-    <div className="h-screen bg-black flex flex-col items-center justify-center gap-4">
-      <div className="flex gap-4">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      {/* REMOTE VIDEO (MAIN) */}
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover bg-black"
+      />
+
+      {/* LOCAL VIDEO (PIP) */}
+      <div className="absolute bottom-24 right-6 w-56 h-40 rounded-xl overflow-hidden border border-white/20 shadow-lg">
         <video
           ref={localVideoRef}
           autoPlay
           muted
-          className="w-64 h-48 bg-gray-800 rounded"
-        />
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          className="w-64 h-48 bg-gray-800 rounded"
+          playsInline
+          className="w-full h-full object-cover bg-black"
         />
       </div>
 
-      <button
-        onClick={startCall}
-        className="bg-blue-600 px-4 py-2 rounded text-white"
-      >
-        Start Call
-      </button>
+      {/* TOP INFO BAR */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white shadow">
+        Session ID: {id}
+      </div>
+
+      {/* BOTTOM CONTROLS */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/50 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl">
+        <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <Mic size={20} />
+        </button>
+
+        <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <Video size={20} />
+        </button>
+
+        <button
+          onClick={startCall}
+          className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center"
+        >
+          <span className="text-sm font-semibold">Call</span>
+        </button>
+
+        <button className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center">
+          <PhoneOff size={20} />
+        </button>
+      </div>
     </div>
   );
 };
