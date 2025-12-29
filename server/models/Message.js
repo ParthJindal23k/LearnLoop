@@ -21,7 +21,7 @@ const messageSchema = new mongoose.Schema(
     },
 
     content: {
-      type: mongoose.Schema.Types.Mixed, // 🔥 IMPORTANT
+      type: mongoose.Schema.Types.Mixed, 
       required: true,
     },
   },

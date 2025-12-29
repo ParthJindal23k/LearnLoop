@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Friends from "./pages/Friends";
@@ -10,7 +10,9 @@ import Notification from "./pages/Notification";
 import Session from "./pages/Session";
 import VideoRoom from "./pages/VideoRoom";
 import VideoPreview from "./pages/VideoPreview";
-
+import ProtectedRoute from "./components/ProtectedRoute";
+import NotFound from "./pages/NotFound";
+import { ToastContainer } from 'react-toastify';  
 
 
 function App() {
@@ -33,52 +35,78 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/friends"
           element={
-            <DashboardLayout>
-              <Friends />
-            </DashboardLayout>
+            <ProtectedRoute>
+
+              <DashboardLayout>
+                <Friends />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/find-friends"
           element={
-            <DashboardLayout>
-              <FindFriends />
-            </DashboardLayout>
+            <ProtectedRoute>
+
+              <DashboardLayout>
+                <FindFriends />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/profile"
           element={
-            <DashboardLayout>
-              <Profile />
-            </DashboardLayout>
+            <ProtectedRoute>
+
+              <DashboardLayout>
+                <Profile />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/notification/"
-          element={<Notification />}
+          element={<ProtectedRoute>
+            <Notification />
+          </ProtectedRoute>
+          }
         />
 
-        <Route path="/session/:id" element={<Session />} />
-        <Route path="/video/:id/preview" element = {<VideoPreview/>} />
+        <Route path="/session/:id" element={<ProtectedRoute>
 
-        <Route path="/video/:id" element={<VideoRoom />} />
+          <Session />
+        </ProtectedRoute>
+        } />
+        <Route path="/video/:id/preview" element={<ProtectedRoute>
+          <VideoPreview />
+        </ProtectedRoute>
+        } />
 
+        <Route path="/video/:id" element={<ProtectedRoute>
+          <VideoRoom />
+        </ProtectedRoute>
+        } />
 
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFound />} />
 
-      </Routes>
+    </Routes>
+    <ToastContainer position="top-right" autoClose={3000} />
     </BrowserRouter>
   );
 }

@@ -52,7 +52,6 @@ const sendFriendRequest = async (req, res) => {
       receiver: receiver._id,
     });
 
-    // 🔔 SOCKET NOTIFICATION
     const io = req.app.get("io");
     const onlineUsers = req.app.get("onlineUsers");
 
@@ -76,7 +75,6 @@ const sendFriendRequest = async (req, res) => {
   }
 };
 
-// ================= GET INCOMING =================
 const getIncomingFriendRequests = async (req, res) => {
   try {
     const requests = await FriendRequest.find({
@@ -101,7 +99,6 @@ const getIncomingFriendRequests = async (req, res) => {
   }
 };
 
-// ================= ACCEPT =================
 const acceptFriendRequest = async (req, res) => {
   try {
     const { requestId } = req.body;
@@ -143,7 +140,6 @@ const acceptFriendRequest = async (req, res) => {
   }
 };
 
-// ================= DECLINE =================
 const declineFriendRequest = async (req, res) => {
   try {
     const { requestId } = req.body;

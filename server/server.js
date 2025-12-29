@@ -14,14 +14,12 @@ const messageRoutes = require("./routes/message");
 const sessionRequestRoutes = require("./routes/sessionRequest");
 const sessionRoutes = require("./routes/session"); 
 const ratingRoutes = require("./routes/rating");
+const User = require("./models/User")
 
 
 const app = express();
 const server = http.createServer(app);
 
-// =======================
-// SOCKET.IO SETUP
-// =======================
 const io = new Server(server, {
   cors: {
     origin: [
@@ -33,30 +31,25 @@ const io = new Server(server, {
   },
 });
 
-// online users map
-const onlineUsers = new Map();
+const onlineUsers = require("./utils/onlineUser")
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // register user
   socket.on("register-user", (userId) => {
     onlineUsers.set(userId, socket.id);
   });
 
-  // disconnect
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
+        await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
         break;
       }
     }
   });
 
-  // =======================
-  // CHAT EVENTS
-  // =======================
   socket.on("join-session", (sessionId) => {
     socket.join(sessionId);
   });
@@ -93,9 +86,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // =======================
-  // VIDEO / WEBRTC EVENTS
-  // =======================
   socket.on("join-video-room", (roomId) => {
     socket.join(roomId);
   });
@@ -113,41 +103,28 @@ io.on("connection", (socket) => {
   });
 });
 
-// expose socket to controllers
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-// =======================
-// MIDDLEWARE
-// =======================
 app.use(cors());
 app.use(express.json());
 
-// =======================
-// ROUTES
-// =======================
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/messages", messageRoutes);
 
-// 🔹 session request (ask / accept / decline)
 app.use("/api/session-request", sessionRequestRoutes);
 
-// 🔹 actual sessions (start / active / terminate)
 app.use("/api/session", sessionRoutes);
 
 app.use("/api/ratings", ratingRoutes);
 
 
-// =======================
 app.get("/", (req, res) => {
   res.send("SkillSwap Backend Running...");
 });
 
-// =======================
-// START SERVER
-// =======================
 const PORT = process.env.PORT || 5000;
 
 connectDB();
@@ -156,4 +133,4 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-module.exports = { app, server };
+module.exports = { app, server, onlineUsers };

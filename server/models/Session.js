@@ -35,7 +35,6 @@ const sessionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// useful index for fast active-session lookup
 sessionSchema.index({ participants: 1, status: 1 });
 
 module.exports = mongoose.model("Session", sessionSchema);

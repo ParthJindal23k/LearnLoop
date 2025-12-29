@@ -1,12 +1,13 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Check, X } from "lucide-react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const NotificationDetailCard = ({ notification, onUpdate }) => {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  // 🛡 SAFE SENDER FALLBACK
   const sender =
     notification.sender || {
       name: notification.senderName || "Unknown User",
@@ -18,9 +19,6 @@ const NotificationDetailCard = ({ notification, onUpdate }) => {
       ratingAvg: null,
     };
 
-  // =========================
-  // ✅ HANDLE ACCEPT / DECLINE
-  // =========================
   const handleAction = async (action) => {
     try {
       let url = "";
@@ -55,22 +53,22 @@ const NotificationDetailCard = ({ notification, onUpdate }) => {
       }
     } catch (err) {
       console.error("Notification action failed:", err);
-      alert("Action failed");
+      toast.error("Action failed");
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 max-w-xl">
-      {/* USER HEADER */}
-      <div className="flex items-center gap-4 mb-5">
+    <div className="w-full sm:max-w-xl bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
+      
+      <div className="flex items-center gap-3 sm:gap-4 mb-5">
         <img
           src={sender.avatarUrl}
           alt="avatar"
-          className="w-16 h-16 rounded-full object-cover border"
+          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border"
         />
 
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
             {sender.name}
           </h2>
           <p className="text-sm text-gray-500">
@@ -79,7 +77,6 @@ const NotificationDetailCard = ({ notification, onUpdate }) => {
         </div>
       </div>
 
-      {/* CONTENT */}
       <div className="space-y-3 text-sm text-gray-700">
         {notification.type === "session-request" && (
           <>
@@ -139,20 +136,25 @@ const NotificationDetailCard = ({ notification, onUpdate }) => {
         )}
       </div>
 
-      {/* STATUS */}
       <div className="mt-4 text-sm">
-        <span className="font-medium text-gray-900">Status:</span>{" "}
+        <span className="font-medium text-gray-900">
+          Status:
+        </span>{" "}
         <span className="capitalize text-gray-600">
           {notification.status || "pending"}
         </span>
       </div>
 
-      {/* ACTIONS */}
       {notification.status === "pending" && (
-        <div className="flex gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
           <button
             onClick={() => handleAction("accept")}
-            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-medium transition"
+            className="
+              flex-1 flex items-center justify-center gap-2
+              bg-green-600 hover:bg-green-700
+              text-white py-2.5
+              rounded-lg font-medium transition
+            "
           >
             <Check size={16} />
             Accept
@@ -160,7 +162,12 @@ const NotificationDetailCard = ({ notification, onUpdate }) => {
 
           <button
             onClick={() => handleAction("decline")}
-            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-medium transition"
+            className="
+              flex-1 flex items-center justify-center gap-2
+              bg-red-600 hover:bg-red-700
+              text-white py-2.5
+              rounded-lg font-medium transition
+            "
           >
             <X size={16} />
             Decline

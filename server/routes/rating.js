@@ -4,7 +4,6 @@ const auth = require("../middleware/auth");
 
 const { submitRating,getPendingRatings } = require("../controllers/ratingController");
 
-// Submit rating
 router.post("/", auth, submitRating);
 router.get('/pending' , auth , getPendingRatings)
 

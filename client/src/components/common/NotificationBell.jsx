@@ -12,9 +12,7 @@ const NotificationBell = () => {
 
   const token = localStorage.getItem("token");
 
-  // ================================
-  // 🔔 SOCKET REAL-TIME EVENTS
-  // ================================
+
   useEffect(() => {
     if (!token) return;
 
@@ -25,6 +23,7 @@ const NotificationBell = () => {
         senderName: data.senderName,
         senderAvatar: data.senderAvatar,
         createdAt: new Date(),
+        seen: false
       });
     };
 
@@ -36,6 +35,7 @@ const NotificationBell = () => {
         senderAvatar: data.receiverAvatar,
         status: data.status,
         createdAt: new Date(),
+        seen: false
       });
     };
 
@@ -46,6 +46,7 @@ const NotificationBell = () => {
         senderName: data.senderName,
         senderAvatar: data.senderAvatar,
         createdAt: new Date(),
+        seen: false
       });
     };
 
@@ -60,9 +61,7 @@ const NotificationBell = () => {
     };
   }, [token]);
 
-  // ================================
-  // 🧠 SAFE ADD (NO DUPLICATES)
-  // ================================
+ 
   const addNotification = (notif) => {
     setNotifications((prev) => {
       const exists = prev.some(
@@ -72,11 +71,8 @@ const NotificationBell = () => {
     });
   };
 
-  // ================================
-  // 📦 LOAD PAST NOTIFICATIONS
-  // ================================
   useEffect(() => {
-    if (!open || !token) return;
+    if (!token) return;
 
     const loadNotifications = async () => {
       try {
@@ -103,6 +99,7 @@ const NotificationBell = () => {
             n.sender?.avatarUrl ||
             "https://avatar.iran.liara.run/public",
           createdAt: n.createdAt,
+          seen: true
         }));
 
         const friendNotifs = friendRes.data.map((n) => ({
@@ -113,24 +110,29 @@ const NotificationBell = () => {
             n.sender?.avatarUrl ||
             "https://avatar.iran.liara.run/public",
           createdAt: n.createdAt,
+          seen: true
         }));
 
-        setNotifications(
-          [...sessionNotifs, ...friendNotifs].sort(
+        setNotifications((prev) => {
+          const map = new Map();
+
+          [...prev, ...sessionNotifs, ...friendNotifs].forEach((n) => {
+            map.set(`${n.type}-${n.requestId}`, n);
+          });
+
+          return [...map.values()].sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-          )
-        );
+          );
+        });
       } catch (err) {
         console.error("Failed to load notifications", err);
       }
     };
 
     loadNotifications();
-  }, [open, token]);
+  }, [token]);
 
-  // ================================
-  // ❌ CLOSE ON OUTSIDE CLICK
-  // ================================
+ 
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -141,29 +143,57 @@ const NotificationBell = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ================================
-  // 🎨 UI
-  // ================================
+
+  const unseenCount = notifications.filter((n) => !n.seen).length;
+
+ 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)} className="relative">
-        <Bell />
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="relative p-2 rounded-lg hover:bg-gray-100 transition"
+      >
+        <Bell className="w-5 h-5" />
 
-        {notifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full px-1">
-            {notifications.length}
+        {unseenCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center px-1">
+            {unseenCount}
           </span>
         )}
+
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-3 w-96 rounded-lg shadow-lg border z-50 bg-white max-h-[400px] overflow-y-auto">
+        <div
+          className="
+    absolute
+    top-full mt-2
+
+    left-1/2 -translate-x-1/2
+    sm:left-auto sm:right-0 sm:translate-x-0
+
+    w-[92vw] sm:w-96
+    max-w-[420px]
+
+    rounded-lg
+    shadow-lg
+    border
+    z-50
+    bg-white
+
+    max-h-[70vh] sm:max-h-[400px]
+    overflow-y-auto
+  "
+        >
+
           <div className="px-4 py-3 font-semibold border-b">
             Notifications
           </div>
 
           {notifications.length === 0 ? (
-            <p className="p-4 text-sm opacity-70">No notifications</p>
+            <p className="p-4 text-sm opacity-70">
+              No notifications
+            </p>
           ) : (
             notifications.slice(0, 8).map((n) => (
               <div
@@ -177,12 +207,13 @@ const NotificationBell = () => {
                 <img
                   src={n.senderAvatar}
                   alt="avatar"
-                  className="w-10 h-10 rounded-full"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"
                 />
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm">
-                    <strong>{n.senderName}</strong> {renderText(n)}
+                    <strong>{n.senderName}</strong>{" "}
+                    {renderText(n)}
                   </p>
                   <p className="text-xs opacity-60 mt-1">
                     {timeAgo(new Date(n.createdAt))}
@@ -197,9 +228,8 @@ const NotificationBell = () => {
   );
 };
 
-// ================================
-// 📝 TEXT RENDERER
-// ================================
+export default NotificationBell;
+
 const renderText = (n) => {
   if (n.type === "friend-request") return "sent you a friend request";
   if (n.type === "session-request") return "sent you a session request";
@@ -211,9 +241,6 @@ const renderText = (n) => {
   return "";
 };
 
-// ================================
-// ⏱ TIME FORMATTER
-// ================================
 const timeAgo = (date) => {
   const seconds = Math.floor((new Date() - date) / 1000);
   if (seconds < 60) return "Just now";
@@ -221,5 +248,3 @@ const timeAgo = (date) => {
   if (seconds < 86400) return `${Math.floor(seconds / 3600)} hrs ago`;
   return `${Math.floor(seconds / 86400)} days ago`;
 };
-
-export default NotificationBell;

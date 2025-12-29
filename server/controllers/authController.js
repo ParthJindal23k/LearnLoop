@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const User = require("../models/User");
 
-// 🔹 Generate JWT
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, email: user.email, name: user.name },
@@ -12,15 +11,11 @@ const generateToken = (user) => {
   );
 };
 
-// 🔹 Generate Random Avatar
 const generateAvatar = () => {
   const randomId = Math.floor(Math.random() * 1000);
   return `https://avatar.iran.liara.run/public/${randomId}`;
 };
 
-// ======================
-// REGISTER USER
-// ======================
 const register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -45,7 +40,7 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
-    const avatarUrl = generateAvatar(); // ✅ Auto avatar
+    const avatarUrl = generateAvatar(); 
 
     const user = new User({
       name,
@@ -54,7 +49,7 @@ const register = async (req, res) => {
       teachSkills,
       learnSkills,
       bio,
-      avatarUrl, // ✅ Saved in DB
+      avatarUrl, 
     });
 
     await user.save();
@@ -68,7 +63,7 @@ const register = async (req, res) => {
         name: user.name,
         email: user.email,
         bio: user.bio,
-        avatarUrl: user.avatarUrl, // ✅ Sent to frontend
+        avatarUrl: user.avatarUrl, 
         teachSkills: user.teachSkills,
         learnSkills: user.learnSkills,
       },
@@ -79,9 +74,6 @@ const register = async (req, res) => {
   }
 };
 
-// ======================
-// LOGIN USER
-// ======================
 const login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -107,7 +99,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         bio: user.bio,
-        avatarUrl: user.avatarUrl, // ✅ Included on login
+        avatarUrl: user.avatarUrl, 
         teachSkills: user.teachSkills,
         learnSkills: user.learnSkills,
       },
@@ -118,9 +110,6 @@ const login = async (req, res) => {
   }
 };
 
-// ======================
-// GET LOGGED IN USER
-// ======================
 const me = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");

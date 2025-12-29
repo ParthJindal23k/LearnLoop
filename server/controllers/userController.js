@@ -2,7 +2,6 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
 
-// random avatar generator
 const generateAvatar = () => {
   const randomId = Math.floor(Math.random() * 1000);
   return `https://avatar.iran.liara.run/public/${randomId}`;
@@ -33,8 +32,6 @@ const updateProfile = async (req, res) => {
 
 
 
-
-// 🔹 Change password
 const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
@@ -69,7 +66,7 @@ const findFriends = async (req, res) => {
     }
 
     const users = await User.find({
-      _id: { $ne: currentUser._id }, // exclude self
+      _id: { $ne: currentUser._id }, 
     }).select("-password");
 
     const rankedUsers = users.map((user) => {
@@ -108,7 +105,6 @@ const findFriends = async (req, res) => {
       };
     });
 
-    // sort by score (highest first)
     rankedUsers.sort((a, b) => b.score - a.score);
 
     res.json(rankedUsers);

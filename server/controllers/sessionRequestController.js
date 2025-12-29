@@ -2,9 +2,6 @@ const SessionRequest = require("../models/SessionRequest");
 const User = require("../models/User");
 const Session = require("../models/Session");
 
-/* =========================
-   START SESSION WITH FRIEND
-========================= */
 const startSessionWithFriend = async (req, res) => {
   try {
     const { friendId } = req.body;
@@ -14,7 +11,6 @@ const startSessionWithFriend = async (req, res) => {
       return res.status(403).json({ message: "Not friends" });
     }
 
-    // check existing active session
     const existingSession = await Session.findOne({
       participants: { $all: [req.user.id, friendId] },
       status: "active",
@@ -36,9 +32,6 @@ const startSessionWithFriend = async (req, res) => {
   }
 };
 
-/* =========================
-   SEND SESSION REQUEST
-========================= */
 const sendRequest = async (req, res) => {
   const { receiverId, skillRequested } = req.body;
 
@@ -91,9 +84,6 @@ const sendRequest = async (req, res) => {
   }
 };
 
-/* =========================
-   GET INCOMING REQUESTS
-========================= */
 const getMyRequests = async (req, res) => {
   try {
     const requests = await SessionRequest.find({
@@ -108,9 +98,6 @@ const getMyRequests = async (req, res) => {
   }
 };
 
-/* =========================
-   ACCEPT REQUEST
-========================= */
 const acceptRequest = async (req, res) => {
   const { requestId } = req.body;
 
@@ -129,18 +116,15 @@ const acceptRequest = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    // 1️⃣ mark request accepted
     request.status = "accepted";
     request.respondedAt = new Date();
     await request.save();
 
-    // 2️⃣ CREATE REAL SESSION 🔥🔥🔥
     const session = await Session.create({
       participants: [request.sender._id, request.receiver._id],
       status: "active",
     });
 
-    // 3️⃣ socket notify sender
     const io = req.app.get("io");
     const onlineUsers = req.app.get("onlineUsers");
     const senderSocketId = onlineUsers.get(request.sender._id.toString());
@@ -161,9 +145,6 @@ const acceptRequest = async (req, res) => {
   }
 };
 
-/* =========================
-   DECLINE REQUEST
-========================= */
 const declineRequest = async (req, res) => {
   const { requestId } = req.body;
 
@@ -183,9 +164,6 @@ const declineRequest = async (req, res) => {
   }
 };
 
-/* =========================
-   GET ACTIVE SESSIONS (FIXED)
-========================= */
 const getActiveSessions = async (req, res) => {
   try {
     const sessions = await Session.find({
@@ -200,9 +178,6 @@ const getActiveSessions = async (req, res) => {
   }
 };
 
-/* =========================
-   TERMINATE SESSION (RATING READY)
-========================= */
 const terminateSession = async (req, res) => {
   const { sessionId } = req.body;
 
@@ -221,7 +196,6 @@ const terminateSession = async (req, res) => {
 
     const io = req.app.get("io");
 
-    // 🔔 Notify BOTH users → open rating popup
     io.to(sessionId).emit("session-ended", {
       sessionId,
       endedBy: req.user.id,

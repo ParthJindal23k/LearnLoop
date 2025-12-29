@@ -31,7 +31,6 @@ const ratingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// prevent double rating
 ratingSchema.index(
   { session: 1, rater: 1 },
   { unique: true }

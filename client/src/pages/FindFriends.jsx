@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Star } from "lucide-react";
+import FindFriendCardSkeleton from "../components/skeletons/FindFriendCardSkeleton";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const FindFriends = () => {
   const [users, setUsers] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -20,19 +26,19 @@ const FindFriends = () => {
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
-
-  // 🔹 Send session request (UNCHANGED)
+  }, [token]);
   const sendSessionRequest = async (receiverId) => {
     try {
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URI}/api/session-request`,
         {
-          receiverId: receiverId,
+          receiverId,
           skillRequested: "SkillSwap Session",
         },
         {
@@ -44,13 +50,12 @@ const FindFriends = () => {
 
       setSentRequests((prev) => [...prev, receiverId]);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to send request");
+      toast.error(err.response?.data?.message || "Failed to send request");
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
           Find Friends
@@ -60,8 +65,13 @@ const FindFriends = () => {
         </p>
       </div>
 
-      {/* EMPTY STATE */}
-      {users.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <FindFriendCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : users.length === 0 ? (
         <div className="bg-white rounded-2xl border p-16 text-center shadow-sm">
           <p className="text-gray-500 text-lg">
             No users found at the moment
@@ -71,13 +81,14 @@ const FindFriends = () => {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {users.map(({ user, matchType }) => {
             const isSent = sentRequests.includes(user._id);
+            const rating = user.ratingAvg || 0;
+            const ratingCount = user.ratingCount || 0;
 
             return (
               <div
                 key={user._id}
                 className="bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                {/* TOP SECTION */}
                 <div className="p-6 flex items-center gap-4">
                   <img
                     src={user.avatarUrl}
@@ -90,9 +101,22 @@ const FindFriends = () => {
                       {user.name}
                     </p>
 
-                    {/* MATCH BADGE */}
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mt-0.5">
+                      <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                      {rating > 0 ? (
+                        <>
+                          <span className="font-medium">{rating.toFixed(1)}</span>
+                          <span className="text-gray-400">
+                            ({ratingCount})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400">No ratings yet</span>
+                      )}
+                    </div>
+
                     <span
-                      className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium ${
+                      className={`inline-block mt-2 px-3 py-0.5 rounded-full text-xs font-medium ${
                         matchType === "perfect"
                           ? "bg-green-100 text-green-700"
                           : "bg-blue-100 text-blue-700"
@@ -103,24 +127,21 @@ const FindFriends = () => {
                   </div>
                 </div>
 
-                {/* SKILLS */}
                 <div className="px-6 pb-4 space-y-2 text-sm text-gray-700">
                   <p>
                     <strong>Teaches:</strong>{" "}
-                    {user.teachSkills.length > 0
+                    {user.teachSkills.length
                       ? user.teachSkills.join(", ")
                       : "—"}
                   </p>
-
                   <p>
                     <strong>Learns:</strong>{" "}
-                    {user.learnSkills.length > 0
+                    {user.learnSkills.length
                       ? user.learnSkills.join(", ")
                       : "—"}
                   </p>
                 </div>
 
-                {/* ACTION */}
                 <div className="px-6 pb-6">
                   <button
                     disabled={isSent}

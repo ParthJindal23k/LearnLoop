@@ -4,7 +4,7 @@ import { socket } from "../socket";
 import { PhoneOff, Mic, Video } from "lucide-react";
 
 const VideoRoom = () => {
-  const { id } = useParams(); // sessionId
+  const { id } = useParams();
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -93,7 +93,7 @@ const VideoRoom = () => {
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-      {/* REMOTE VIDEO (MAIN) */}
+
       <video
         ref={remoteVideoRef}
         autoPlay
@@ -101,42 +101,83 @@ const VideoRoom = () => {
         className="absolute inset-0 w-full h-full object-cover bg-black"
       />
 
-      {/* LOCAL VIDEO (PIP) */}
-      <div className="absolute bottom-24 right-6 w-56 h-40 rounded-xl overflow-hidden border border-white/20 shadow-lg">
+      <div
+        className="
+          absolute
+          bottom-28 sm:bottom-24
+          right-3 sm:right-6
+          w-32 h-44
+          sm:w-56 sm:h-40
+          rounded-xl
+          overflow-hidden
+          border border-white/20
+          shadow-lg
+          bg-black
+        "
+      >
         <video
           ref={localVideoRef}
           autoPlay
           muted
           playsInline
-          className="w-full h-full object-cover bg-black"
+          className="w-full h-full object-cover"
         />
       </div>
 
-      {/* TOP INFO BAR */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-sm text-white shadow">
+      <div
+        className="
+          absolute top-3 sm:top-4
+          left-1/2 -translate-x-1/2
+          bg-black/40 backdrop-blur-md
+          px-3 py-1.5
+          sm:px-4 sm:py-2
+          rounded-full
+          text-xs sm:text-sm
+          text-white
+          shadow
+        "
+      >
         Session ID: {id}
       </div>
 
-      {/* BOTTOM CONTROLS */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/50 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl">
-        <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
-          <Mic size={20} />
-        </button>
-
-        <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
-          <Video size={20} />
-        </button>
-
-        <button
-          onClick={startCall}
-          className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center"
+      <div
+        className="
+          absolute bottom-4 sm:bottom-6
+          left-1/2 -translate-x-1/2
+          w-[95%] sm:w-auto
+          flex justify-center
+        "
+      >
+        <div
+          className="
+            flex items-center justify-center
+            gap-4 sm:gap-6
+            bg-black/50 backdrop-blur-md
+            px-4 sm:px-6
+            py-3
+            rounded-2xl
+            shadow-xl
+          "
         >
-          <span className="text-sm font-semibold">Call</span>
-        </button>
+          <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+            <Mic size={20} />
+          </button>
 
-        <button className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center">
-          <PhoneOff size={20} />
-        </button>
+          <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+            <Video size={20} />
+          </button>
+
+          <button
+            onClick={startCall}
+            className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center"
+          >
+            <span className="text-sm font-semibold">Call</span>
+          </button>
+
+          <button className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center">
+            <PhoneOff size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );

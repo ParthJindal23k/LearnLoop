@@ -16,7 +16,7 @@ const sessionRequestSchema = new mongoose.Schema(
 
     skillRequested: {
       type: String,
-      required: true, // skill receiver wants to learn
+      required: true, 
     },
 
     status: {
@@ -32,7 +32,6 @@ const sessionRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent duplicate pending requests
 sessionRequestSchema.index(
   { sender: 1, receiver: 1, skillRequested: 1 },
   { unique: true }

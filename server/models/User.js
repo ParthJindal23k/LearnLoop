@@ -45,7 +45,6 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ⭐ Rating system
     ratingAvg: {
       type: Number,
       min: 0,
@@ -57,11 +56,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    lastSeen: {
+      type: Date,
+      default: Date.now
+    }
+
   },
   { timestamps: true }
 );
 
-// Index for ranking / sorting users by rating
 userSchema.index({ ratingAvg: -1 });
 
 module.exports = mongoose.model("User", userSchema);

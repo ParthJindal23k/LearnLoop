@@ -2,16 +2,19 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { MoreVertical, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import FriendCardSkeleton from "../components/skeletons/FriendCardSkeleton";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 const Friends = () => {
   const [friends, setFriends] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
+  const [loading, setLoading] = useState(true); 
+
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // =========================
-  // 📥 LOAD FRIENDS (UNCHANGED)
-  // =========================
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -24,15 +27,14 @@ const Friends = () => {
         setFriends(res.data);
       } catch (err) {
         console.error("Failed to load friends", err);
+      } finally {
+        setLoading(false); 
       }
     };
 
     fetchFriends();
   }, [token]);
 
-  // =========================
-  // ▶ START SESSION (UNCHANGED)
-  // =========================
   const startSession = async (friendId) => {
     try {
       const res = await axios.post(
@@ -48,13 +50,10 @@ const Friends = () => {
       navigate(`/session/${res.data.sessionId}`);
     } catch (err) {
       console.error("Start session error:", err);
-      alert("Failed to start session");
+      toast.error("Failed to start session");
     }
   };
 
-  // =========================
-  // ❌ REMOVE FRIEND (UNCHANGED)
-  // =========================
   const removeFriend = async (friendId) => {
     if (!window.confirm("Remove this friend?")) return;
 
@@ -70,13 +69,12 @@ const Friends = () => {
       setOpenMenu(null);
     } catch (err) {
       console.error("Remove friend error:", err);
-      alert("Failed to remove friend");
+      toast.error("Failed to remove friend");
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Friends</h1>
         <p className="text-gray-500 mt-1">
@@ -84,8 +82,13 @@ const Friends = () => {
         </p>
       </div>
 
-      {/* EMPTY STATE */}
-      {friends.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <FriendCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : friends.length === 0 ? (
         <div className="bg-white rounded-2xl border p-16 text-center shadow-sm">
           <p className="text-gray-500 text-lg">
             You haven’t added any friends yet
@@ -98,7 +101,6 @@ const Friends = () => {
               key={friend._id}
               className="relative bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              {/* MENU */}
               <button
                 onClick={() =>
                   setOpenMenu(openMenu === friend._id ? null : friend._id)
@@ -119,7 +121,6 @@ const Friends = () => {
                 </div>
               )}
 
-              {/* USER INFO */}
               <div className="p-6 flex items-center gap-4">
                 <img
                   src={friend.avatarUrl || "/default-avatar.png"}
@@ -137,7 +138,6 @@ const Friends = () => {
                 </div>
               </div>
 
-              {/* SKILLS */}
               <div className="px-6 pb-4 text-sm text-gray-700 space-y-2">
                 <p>
                   <strong>Teaches:</strong>{" "}
@@ -154,7 +154,6 @@ const Friends = () => {
                 </p>
               </div>
 
-              {/* ACTION */}
               <div className="px-6 pb-6">
                 <button
                   onClick={() => startSession(friend._id)}
