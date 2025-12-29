@@ -106,7 +106,12 @@ io.on("connection", (socket) => {
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URI,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
